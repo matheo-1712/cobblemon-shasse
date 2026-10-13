@@ -1,0 +1,35 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="CC0-1.0"
+
+[[mods]]
+modId="cobblemon_shasse"
+version="${version}"
+displayName="Cobblemon Shasse"
+authors="RereBleue"
+description='''Méthodes de shasse et statistiques persistantes côté serveur.'''
+
+[[dependencies.cobblemon_shasse]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+side="SERVER"
+
+[[dependencies.cobblemon_shasse]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.182,21.2)"
+side="SERVER"
+
+[[dependencies.cobblemon_shasse]]
+modId="cobblemon"
+type="required"
+versionRange="[1.8.1+1.21.1]"
+ordering="AFTER"
+side="SERVER"
+
+[[dependencies.cobblemon_shasse]]
+modId="kotlinforforge"
+type="required"
+versionRange="[5.10,)"
+side="SERVER"

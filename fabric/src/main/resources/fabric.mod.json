@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "cobblemon_shasse",
+  "version": "${version}",
+  "name": "Cobblemon Shasse",
+  "description": "Méthodes de shasse et statistiques persistantes côté serveur.",
+  "authors": ["RereBleue"],
+  "license": "CC0-1.0",
+  "environment": "server",
+  "entrypoints": {
+    "server": ["rerebleue.cobblemon_shasse.fabric.FabricShasse"]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "1.21.1",
+    "java": ">=21",
+    "fabric-api": ">=0.116.6",
+    "fabric-language-kotlin": ">=1.13.6",
+    "cobblemon": "1.8.1"
+  }
+}

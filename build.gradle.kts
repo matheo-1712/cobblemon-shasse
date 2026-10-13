@@ -1,92 +1,37 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-	id("net.fabricmc.fabric-loom-remap")
-	`maven-publish`
-	id("org.jetbrains.kotlin.jvm") version "2.4.21"
+    base
+    kotlin("jvm") version "2.2.20" apply false
+    id("fabric-loom") version "1.11.8" apply false
+    id("net.neoforged.moddev") version "2.0.147" apply false
 }
-
-repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+allprojects {
+    group = rootProject.property("mod_group")!!
+    version = rootProject.property("mod_version")!!
+    repositories {
+        mavenCentral()
+        maven("https://maven.fabricmc.net/")
+        maven("https://maven.neoforged.net/releases")
+        maven("https://thedarkcolour.github.io/KotlinForForge/")
+        exclusiveContent {
+            forRepository { maven("https://api.modrinth.com/maven") }
+            filter { includeGroup("maven.modrinth") }
+        }
+    }
 }
-
-loom {
-	splitEnvironmentSourceSets()
-
-	mods {
-		register("cobblemon-shasse") {
-			sourceSet(sourceSets.main.get())
-			sourceSet(sourceSets.getByName("client"))
-		}
-	}
+subprojects {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
+        jvmToolchain(21)
+        compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
+    }
+    tasks.withType<JavaCompile>().configureEach { options.release.set(21) }
+    tasks.withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
+    tasks.withType<Jar>().configureEach { from(rootProject.file("LICENSE")) }
 }
-
-dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft("com.mojang:minecraft:${providers.gradleProperty("minecraft_version").get()}")
-    mappings(loom.officialMojangMappings())
-	modImplementation("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
-
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
-    modImplementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
-}
-
-tasks.processResources {
-	val version = version
-	inputs.property("version", version)
-
-	filesMatching("fabric.mod.json") {
-		expand("version" to version)
-	}
-}
-
-tasks.withType<JavaCompile>().configureEach {
-	options.release = 21
-}
-
-kotlin {
-	compilerOptions {
-		jvmTarget = JvmTarget.JVM_21
-	}
-}
-
-java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
-}
-
-tasks.jar {
-	val projectName = project.name
-	inputs.property("projectName", projectName)
-
-	from("LICENSE") {
-		rename { "${it}_$projectName" }
-	}
-}
-
-// configure the maven publication
-publishing {
-	publications {
-		register<MavenPublication>("mavenJava") {
-			from(components["java"])
-		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
-}
+tasks.named("build") { dependsOn(":common:build", ":fabric:build", ":neoforge:build") }
+tasks.named("check") { dependsOn(":common:check", ":fabric:check", ":neoforge:check") }
