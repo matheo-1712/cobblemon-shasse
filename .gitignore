@@ -41,3 +41,9 @@ replay_*.log
 .work/
 run-client/
 run-test-server/
+
+Lancer-client-Fabric.bat
+Lancer-client-NeoForge.bat
+Lancer-serveur-test-Fabric.bat
+Lancer-serveur-test-NeoForge.bat
+tools/Start-TestEnvironment.ps1
