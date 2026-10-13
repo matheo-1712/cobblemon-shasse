@@ -21,6 +21,12 @@ Cobblemon 1.8.1, Fabric Loader 0.17.2 et NeoForge 21.1.249.
 | Lancement sans Cobblemon sur Fabric | Refus explicite du loader avant démarrage |
 | Lancement sans Cobblemon sur NeoForge | Refus explicite du loader avant démarrage |
 | Vérification des espaces/erreurs de diff | `git diff --check` sans erreur de contenu |
+| Client de développement Fabric sans Shasse | Démarré avec Cobblemon ; Shasse absent de la liste des mods |
+| Serveur Fabric local isolé | Démarré sur `127.0.0.1:25565`, service Shasse actif |
+| Profil client NeoForge sans Shasse | Configuration et ressources préparées ; lancement graphique non exécuté |
+| Pseudo par défaut des clients | `RereBleue` enregistré dans les lanceurs et Gradle |
+| Droits opérateur du serveur Fabric local | Commande `op RereBleue` exécutée avec succès |
+| Droits opérateur persistants des profils locaux | `RereBleue`, niveau 4 ; autres opérateurs conservés |
 
 Le test de persistance utilise le joueur fictif
 `00000000-0000-0000-0000-000000000001` et le compteur éligible de
@@ -37,6 +43,10 @@ et PNJ et l'attribution des KO en combat multiple.
 
 Les artefacts de développement ont été vérifiés ; une connexion à un serveur
 installé à partir des JAR distribuables n'a pas été réalisée.
+Le démarrage du client Fabric est confirmé par l'initialisation du rendu,
+du son et des ressources Cobblemon. Cela ne constitue pas encore une validation
+de connexion multijoueur au serveur Shasse. Un monde solo lancé dans ce profil
+ne charge pas Shasse : rejoindre le serveur local via le menu Multijoueur.
 
 ## Vérifications restant à faire en jeu
 

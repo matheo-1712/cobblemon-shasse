@@ -39,3 +39,5 @@ replay_*.log
 *.hprof
 *.jfr
 .work/
+run-client/
+run-test-server/

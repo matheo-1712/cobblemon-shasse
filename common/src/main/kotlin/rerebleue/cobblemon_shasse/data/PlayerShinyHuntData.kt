@@ -23,9 +23,18 @@ data class SpeciesStatistics(
 data class PlayerShinyHuntData(
     val playerUUID: UUID,
     val speciesStatistics: MutableMap<String, SpeciesStatistics> = linkedMapOf(),
-    var lastCapturedSpecies: String? = null
+    var lastCapturedSpecies: String? = null,
+    var currentHuntSpecies: String? = null
 ) {
     fun statistics(species: String) = speciesStatistics.getOrPut(species) { SpeciesStatistics() }
+    fun currentHunt(): Pair<String, SpeciesStatistics>? {
+        val species = currentHuntSpecies ?: return null
+        return speciesStatistics[species]?.let { species to it }
+    }
+    fun recordEncounter(species: String, outcome: Outcome, eligibleForTotal: Boolean) {
+        statistics(species).record(outcome, eligibleForTotal)
+        currentHuntSpecies = species
+    }
     fun recordCaptureChain(species: String) {
         if (lastCapturedSpecies != species) {
             lastCapturedSpecies?.let { speciesStatistics[it]?.captureStreak = 0 }
@@ -34,9 +43,11 @@ data class PlayerShinyHuntData(
         val stats = statistics(species)
         stats.captureStreak = SpeciesStatistics.increment(stats.captureStreak)
         lastCapturedSpecies = species
+        currentHuntSpecies = species
     }
     fun reset(species: String) {
         speciesStatistics.remove(species)
         if (lastCapturedSpecies == species) lastCapturedSpecies = null
+        if (currentHuntSpecies == species) currentHuntSpecies = null
     }
 }

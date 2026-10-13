@@ -16,6 +16,8 @@ import rerebleue.cobblemon_shasse.ShasseRuntime
 import rerebleue.cobblemon_shasse.data.SpeciesStatistics
 import rerebleue.cobblemon_shasse.method.SwordShieldMethod
 import java.util.UUID
+import java.text.NumberFormat
+import java.util.Locale
 
 object ShinyHuntCommands {
     private val error = DynamicCommandExceptionType { Component.literal(it.toString()) }
@@ -29,19 +31,14 @@ object ShinyHuntCommands {
         dispatcher.register(literal("shinyhunt")
             .then(literal("stats").executes { ctx ->
                 val r = requireRuntime()
-                val data = r.storage.player(ctx.source.playerOrException.uuid)
-                if (data.speciesStatistics.isEmpty()) reply(ctx.source, "Aucune rencontre éligible comptabilisée.")
-                else {
-                    data.speciesStatistics.toSortedMap().entries.take(20).forEach { (id, stats) ->
-                        reply(ctx.source, describe(id, stats, r))
-                    }
-                    if (data.speciesStatistics.size > 20) reply(ctx.source, "20 espèces affichées. /shinyhunt stats <pokemon> pour les autres.")
-                }
+                val current = r.storage.findPlayer(ctx.source.playerOrException.uuid)?.currentHunt()
+                if (current == null) reply(ctx.source, "Aucune shasse en cours. Mets KO ou capture un Pokémon sauvage pour commencer.")
+                else reply(ctx.source, describe(current.first, current.second, r, current = true))
                 1
             }.then(speciesArgument().executes { ctx ->
                 val r = requireRuntime()
                 val id = species(ctx)
-                val stats = r.storage.player(ctx.source.playerOrException.uuid).speciesStatistics[id] ?: SpeciesStatistics()
+                val stats = r.storage.findPlayer(ctx.source.playerOrException.uuid)?.speciesStatistics?.get(id) ?: SpeciesStatistics()
                 reply(ctx.source, describe(id, stats, r))
                 1
             }))
@@ -80,7 +77,9 @@ object ShinyHuntCommands {
                         val player = targetPlayer(ctx)
                         val id = species(ctx)
                         val count = LongArgumentType.getLong(ctx, "count")
-                        r.storage.player(player).statistics(id).totalBattledCount = count
+                        val data = r.storage.player(player)
+                        data.statistics(id).totalBattledCount = count
+                        data.currentHuntSpecies = id
                         r.changed()
                         reply(ctx.source, "Compteur éligible de $id : $count pour $player.")
                         1
@@ -101,13 +100,25 @@ object ShinyHuntCommands {
             ?: runCatching { UUID.fromString(input) }.getOrNull()
             ?: throw error.create("Utiliser le nom d'un joueur connecté ou son UUID.")
     }
-    private fun describe(id: String, s: SpeciesStatistics, r: ShasseRuntime): String {
+    private fun describe(id: String, s: SpeciesStatistics, r: ShasseRuntime, current: Boolean = false): Component {
         val method = SwordShieldMethod()
-        return "$id : KO=${s.defeatedCount}, captures=${s.capturedCount}, total=${s.totalBattledCount}, " +
-            "chaîne=${s.captureStreak}, bonus=+${method.tier(s.totalBattledCount, r.config)} tirages" +
-            if (r.config.swordShield.mode == rerebleue.cobblemon_shasse.config.HuntMode.FAITHFUL)
-                " sur ${method.brilliantProbability(s.totalBattledCount, r.config) * 100}% d'apparitions spéciales." else "."
+        val name = PokemonSpecies.getByIdentifier(ResourceLocation.parse(id))?.translatedName ?: Component.literal(id)
+        val result = Component.literal(if (current) "Shasse en cours : " else "").append(name)
+            .append(" — KO : ${s.defeatedCount} | captures : ${s.capturedCount} | total : ${s.totalBattledCount}.")
+        if (r.config.captureChain.enabled) result.append(" Chaîne de captures : ${s.captureStreak}.")
+        if (method.enabled(r.config)) {
+            val rolls = method.tier(s.totalBattledCount, r.config)
+            result.append(" Bonus : +$rolls ${if (rolls == 1) "tirage" else "tirages"}")
+            if (r.config.swordShield.mode == rerebleue.cobblemon_shasse.config.HuntMode.FAITHFUL) {
+                val percentage = NumberFormat.getPercentInstance(Locale.FRENCH).apply { maximumFractionDigits = 1 }
+                    .format(method.brilliantProbability(s.totalBattledCount, r.config))
+                result.append(" sur $percentage d'apparitions spéciales")
+            }
+            result.append(".")
+        }
+        return result
     }
-    private fun reply(source: CommandSourceStack, text: String) =
-        source.sendSuccess({ Component.literal("[Shasse] $text") }, false)
+    private fun reply(source: CommandSourceStack, text: String) = reply(source, Component.literal(text))
+    private fun reply(source: CommandSourceStack, text: Component) =
+        source.sendSuccess({ Component.literal("[Shasse] ").append(text) }, false)
 }

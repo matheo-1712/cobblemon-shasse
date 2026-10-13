@@ -229,7 +229,7 @@ Conserver une sauvegarde du monde avant toute intervention manuelle.
 
 | Commande | Accès |
 |---|---|
-| `/shinyhunt stats` | Joueur ; affiche jusqu'à 20 espèces |
+| `/shinyhunt stats` | Joueur ; affiche uniquement la shasse en cours |
 | `/shinyhunt stats <pokemon>` | Joueur ; espèce exacte |
 | `/shinyhunt methods` | Joueur ou console |
 | `/shinyhunt reload` | Opérateur niveau 2 / console |
@@ -242,6 +242,61 @@ chargées par Cobblemon. `set` conserve les compteurs bruts KO/captures et sert 
 tester les paliers. Il ne transforme pas les Pokémon existants.
 
 ## Tests
+
+La shasse affichée est l'espèce du dernier KO ou de la dernière capture éligible.
+Les apparitions seules ne créent pas de compteur ni de shasse en cours.
+Le suivi persiste après redémarrage ; les statistiques des autres espèces restent
+consultables avec `/shinyhunt stats <pokemon>`. Un `admin set` sélectionne l'espèce
+modifiée ; réinitialiser l'espèce en cours efface cette sélection. Pour les anciens
+fichiers, une seule espèce avec progression est reprise automatiquement ; sinon,
+la prochaine interaction éligible fixe la shasse en cours.
+
+### Client de test sans Shasse
+
+Quatre raccourcis Windows sont disponibles à la racine :
+
+- `Lancer-serveur-test-Fabric.bat`, puis `Lancer-client-Fabric.bat`.
+- `Lancer-serveur-test-NeoForge.bat`, puis `Lancer-client-NeoForge.bat`.
+
+Le script détecte le JDK 21 dans `JAVA_HOME` ou dans le dossier `.jdks` de
+l'utilisateur. Le premier lancement prépare les ressources Minecraft.
+Dans Minecraft, ouvrir **Multijoueur → Connexion rapide**, puis saisir :
+
+| Loader | Adresse locale |
+|---|---|
+| Fabric | `127.0.0.1:25565` |
+| NeoForge | `127.0.0.1:25566` |
+
+Le nom de développement permanent par défaut est `RereBleue`, enregistré dans
+`gradle.properties` et dans le lanceur Windows. Ces profils utilisent une identité
+locale et se connectent aux serveurs de test locaux sans authentification Microsoft.
+Les serveurs de test sont liés à `127.0.0.1`, avec un monde distinct, dans
+`<loader>/run-test-server/`. Les réglages et mondes des serveurs existants dans
+`<loader>/run/` sont conservés. Le contrat déjà accepté par l'utilisateur est
+recopié uniquement si aucun contrat n'existe dans le nouveau profil.
+
+Les données client sont dans `<loader>/run-client/`. Les classes et métadonnées
+de Shasse sont **retirées du lancement client**, plutôt que simplement désactivées.
+Cobblemon et les dépendances du loader sont présents.
+
+Commandes équivalentes :
+
+```powershell
+.\gradlew.bat :fabric:runLocalTestServer
+.\gradlew.bat :fabric:runClient
+.\gradlew.bat :neoforge:runLocalTestServer
+.\gradlew.bat :neoforge:runClient
+```
+
+Pour un second joueur local :
+`powershell -File tools/Start-TestEnvironment.ps1 -Loader fabric -Mode Client -PlayerName ShasseTest2`.
+`RereBleue` est automatiquement opérateur niveau 4 sur les deux serveurs de test
+locaux. Son UUID de profil local est utilisé ; les autres opérateurs sont conservés.
+Pour autoriser un autre joueur de test après connexion, saisir `op <pseudo>`
+dans la console du serveur.
+Saisir `stop` dans cette console pour arrêter proprement le serveur de test.
+
+### Validation du mod
 
 Voir [la procédure de validation](docs/TESTING.md), notamment les tests en jeu qui
 nécessitent un client Cobblemon. Les tests unitaires ne prouvent pas à eux seuls

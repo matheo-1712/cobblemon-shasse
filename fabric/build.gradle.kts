@@ -2,6 +2,10 @@ plugins { id("fabric-loom") }
 base { archivesName.set("cobblemon-shasse-fabric") }
 kotlin.sourceSets.main { kotlin.srcDir("../common/src/main/kotlin") }
 sourceSets.main { resources.srcDir("../common/src/main/resources") }
+// Test the real server-only installation: do not put Shasse's classes or metadata on the client classpath.
+val testClient = sourceSets.create("testClient") {
+    runtimeClasspath = sourceSets.main.get().runtimeClasspath - sourceSets.main.get().output
+}
 dependencies {
     minecraft("com.mojang:minecraft:${property("minecraft_version")}")
     mappings(loom.officialMojangMappings())
@@ -18,7 +22,34 @@ dependencies {
         runtimeOnly("org.mongodb:mongodb-driver-sync:4.10.2")
     }
 }
-loom { runs { named("server") { runDir("run"); programArg("nogui") } } }
+loom {
+    runs {
+        named("server") { runDir("run"); programArg("nogui") }
+        named("client") {
+            source(testClient)
+            runDir("run-client")
+            configName = "Fabric - Client Cobblemon sans Shasse"
+            ideConfigGenerated(true)
+            programArgs("--username", providers.gradleProperty("testPlayer").getOrElse("RereBleue"))
+            vmArg("-Xmx3G")
+        }
+        create("localTestServer") {
+            server()
+            runDir("run-test-server")
+            configName = "Fabric - Serveur de test local"
+            ideConfigGenerated(true)
+            vmArg("-Xmx3G")
+        }
+    }
+}
+tasks.named<JavaExec>("runClient") {
+    doFirst {
+        check(testClient.runtimeClasspath.files.intersect(sourceSets.main.get().output.files).isEmpty()) {
+            "Le client de test doit exclure les fichiers de Shasse"
+        }
+    }
+}
+tasks.named("runLocalTestServer") { dependsOn(rootProject.tasks.named("prepareLocalTestServers")) }
 tasks.processResources {
     inputs.property("version", project.version)
     filesMatching("fabric.mod.json") { expand("version" to project.version) }

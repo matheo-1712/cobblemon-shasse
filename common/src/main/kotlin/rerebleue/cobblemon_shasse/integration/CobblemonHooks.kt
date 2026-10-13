@@ -13,6 +13,7 @@ import rerebleue.cobblemon_shasse.ShasseRuntime
 import rerebleue.cobblemon_shasse.config.Attribution
 import rerebleue.cobblemon_shasse.data.Outcome
 import rerebleue.cobblemon_shasse.data.EncounterLedger
+import rerebleue.cobblemon_shasse.data.SpeciesStatistics
 import rerebleue.cobblemon_shasse.method.ShinyProbability
 import java.util.UUID
 import kotlin.random.Random
@@ -45,7 +46,8 @@ class CobblemonHooks(private val runtime: ShasseRuntime) : AutoCloseable {
                             ?: server.playerList.getPlayer(source)
                     }
                     if (player == null) rate else {
-                        val stats = runtime.storage.player(player.uuid).statistics(pokemon.species.resourceIdentifier.toString())
+                        val stats = runtime.storage.findPlayer(player.uuid)?.speciesStatistics
+                            ?.get(pokemon.species.resourceIdentifier.toString()) ?: SpeciesStatistics()
                         val rolls = cachedRolls ?: runtime.methods.extraRolls(stats, config, Random.nextDouble()).also {
                             cachedRolls = it
                             tags.putBoolean(NaturalSpawnProperty.ROLLED, true)
@@ -111,7 +113,7 @@ class CobblemonHooks(private val runtime: ShasseRuntime) : AutoCloseable {
             config.swordShield.enabled && countForMethod) ?: return
         val species = pokemon.species.resourceIdentifier.toString()
         val data = runtime.storage.player(player)
-        if (countOutcome) data.statistics(species).record(outcome, addTotal)
+        if (countOutcome) data.recordEncounter(species, outcome, addTotal)
         if (outcome == Outcome.CAPTURE && config.captureChain.enabled) data.recordCaptureChain(species)
         pokemon.onChange()
         runtime.changed()

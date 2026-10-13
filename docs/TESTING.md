@@ -55,6 +55,11 @@ Ne pas modifier votre serveur principal pour ce test.
 
 ## Connexion sans Shasse sur le client
 
+Les profils prêts à lancer sont décrits dans le README : utiliser les raccourcis
+`Lancer-serveur-test-<loader>.bat` puis `Lancer-client-<loader>.bat`.
+Ces clients excluent les fichiers du mod Shasse de leur lancement. Les serveurs
+locaux utilisent les ports 25565 (Fabric) et 25566 (NeoForge), sur `127.0.0.1`.
+
 1. Installer Minecraft 1.21.1, le loader correspondant, Cobblemon 1.8.1 et ses
    dépendances sur un client.
 2. Laisser **Cobblemon Shasse absent** de ses mods.
